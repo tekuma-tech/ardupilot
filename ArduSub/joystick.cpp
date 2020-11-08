@@ -109,24 +109,37 @@ void Sub::transform_manual_control_to_rc_override(int16_t x, int16_t y, int16_t 
         yTot = y + yTrim;
         xTot = x + xTrim;
     }
-
-    RC_Channels::set_override(0, constrain_int16(pitchTrim + rpyCenter,1100,1900), tnow); // pitch
-    RC_Channels::set_override(1, constrain_int16(rollTrim  + rpyCenter,1100,1900), tnow); // roll
-
-    RC_Channels::set_override(2, constrain_int16((zTot)*throttleScale+throttleBase,1100,1900), tnow); // throttle
-    RC_Channels::set_override(3, constrain_int16(r*rpyScale+rpyCenter,1100,1900), tnow);                 // yaw
-
-    // maneuver mode:
-    if (roll_pitch_flag == 0) {
-        // adjust forward and lateral with joystick input instead of roll and pitch
-        RC_Channels::set_override(4, constrain_int16((xTot)*rpyScale+rpyCenter,1100,1900), tnow); // forward for ROV
-        RC_Channels::set_override(5, constrain_int16((yTot)*rpyScale+rpyCenter,1100,1900), tnow); // lateral for ROV
-    } else {
-        // neutralize forward and lateral input while we are adjusting roll and pitch
-        RC_Channels::set_override(4, constrain_int16(xTrim*rpyScale+rpyCenter,1100,1900), tnow); // forward for ROV
-        RC_Channels::set_override(5, constrain_int16(yTrim*rpyScale+rpyCenter,1100,1900), tnow); // lateral for ROV
+    
+    //if input is INT16_MAX then ignore the x value and don't override the RC Channel
+    if(x != INT16_MAX && roll_pitch_flag){
+        RC_Channels::set_override(0, constrain_int16(pitchTrim + rpyCenter,1100,1900), tnow); // pitch
     }
-
+    if(y != INT16_MAX && roll_pitch_flag){
+        RC_Channels::set_override(1, constrain_int16(rollTrim  + rpyCenter,1100,1900), tnow); // roll
+    }
+    
+    if(z != INT16_MAX){
+        RC_Channels::set_override(2, constrain_int16((zTot)*throttleScale+throttleBase,1100,1900), tnow); // throttle
+    }
+    if(r != INT16_MAX){
+        RC_Channels::set_override(3, constrain_int16(r*rpyScale+rpyCenter,1100,1900), tnow);                 // yaw
+    }
+    // maneuver mode:
+    if(x != INT16_MAX || y != INT16_MAX){ //if both of these values are INT16_MAX skip this section
+        if (roll_pitch_flag == 0) {
+            // adjust forward and lateral with joystick input instead of roll and pitch
+            if(x != INT16_MAX){
+                RC_Channels::set_override(4, constrain_int16((xTot)*rpyScale+rpyCenter,1100,1900), tnow); // forward for ROV
+            }
+            if(y != INT16_MAX){
+                RC_Channels::set_override(5, constrain_int16((yTot)*rpyScale+rpyCenter,1100,1900), tnow); // lateral for ROV
+            }
+        } else {
+            // neutralize forward and lateral input while we are adjusting roll and pitch
+            RC_Channels::set_override(4, constrain_int16(xTrim*rpyScale+rpyCenter,1100,1900), tnow); // forward for ROV
+            RC_Channels::set_override(5, constrain_int16(yTrim*rpyScale+rpyCenter,1100,1900), tnow); // lateral for ROV
+        }
+    }
     RC_Channels::set_override(6, cam_pan, tnow);       // camera pan
     RC_Channels::set_override(7, cam_tilt, tnow);      // camera tilt
     RC_Channels::set_override(8, lights1, tnow);       // lights 1
